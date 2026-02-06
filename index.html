@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>A Lenda do Morfema Perdido</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary: #6C5CE7;
+            --secondary: #00CEC9;
+            --accent: #FDCB6E;
+            --danger: #E17055;
+            --success: #00B894;
+            --dark: #2D3436;
+            --light: #F8F9FA;
+            --phase1: #74B9FF;
+            --phase2: #A29BFE;
+            --phase3: #FD79A8;
+            --phase4: #FDCB6E;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--dark);
+        }
+
+        .game-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 10px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-header {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--phase1), var(--phase2), var(--phase3), var(--phase4));
+        }
+
+        .game-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .phase-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .phase-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ddd;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .phase-dot.active {
+            transform: scale(1.3);
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .phase-dot:nth-child(1) { color: var(--phase1); }
+        .phase-dot:nth-child(2) { color: var(--phase2); }
+        .phase-dot:nth-child(3) { color: var(--phase3); }
+        .phase-dot:nth-child(4) { color: var(--phase4); }
+
+        .phase-dot.completed { background: var(--success); }
+        .phase-dot.current { background: currentColor; }
+
+        .player-bar {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px 0;
+            margin-bottom: 10px;
+            scrollbar-width: none;
+        }
+
+        .player-bar::-webkit-scrollbar { display: none; }
+
+        .player-card {
+            min-width: 80px;
+            background: white;
+            border-radius: 15px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            position: relative;
+            border: 3px solid transparent;
+        }
+
+        .player-card.active {
+            border-color: var(--accent);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(253, 203, 110, 0.5);
+        }
+
+        .player-card.turn {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(108, 92, 231, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(108, 92, 231, 0); }
+        }
+
+        .player-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin: 0 auto 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        .player-name {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-score {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-top: 3px;
+        }
+
+        .player-status {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .narrative-box {
+            background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(45,52,54,0.9));
+            color: white;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            position: relative;
+            border-left: 5px solid var(--accent);
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .narrative-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            float: left;
+        }
+
+        .question-container {
+            background: white;
+            border-radius: 25px;
+            padding: 25px;
+            margin-bottom: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            position: relative;
+            flex: 1;
+        }
+
+        .question-number {
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .question-theme {
+            display: inline-block;
+            background: rgba(108, 92, 231, 0.1);
+            color: var(--primary);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .timer-bar {
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .timer-progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--accent), var(--danger));
+            border-radius: 3px;
+            transition: width 0.1s linear;
+            width: 100%;
+        }
+
+        .timer-text {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 18px 15px;
+            font-size: 0.95rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            background: rgba(108, 92, 231, 0.1);
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .option-btn:active:not(.disabled) {
+            transform: scale(0.98);
+        }
+
+        .option-btn.correct {
+            background: rgba(0, 184, 148, 0.2);
+            border-color: var(--success);
+            color: var(--success);
+            animation: correctPulse 0.5s;
+        }
+
+        .option-btn.wrong {
+            background: rgba(225, 112, 85, 0.2);
+            border-color: var(--danger);
+            color: var(--danger);
+            animation: shake 0.5s;
+        }
+
+        .option-btn.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .option-letter {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: 700;
+            margin-right: 10px;
+            font-size: 0.85rem;
+        }
+
+        .option-btn.correct .option-letter { background: var(--success); }
+        .option-btn.wrong .option-letter { background: var(--danger); }
+
+        .powerup-tray {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .powerup-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 20px;
+            border: none;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3);
+        }
+
+        .powerup-btn:hover:not(.disabled) {
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 0 10px 25px rgba(108, 92, 231, 0.4);
+        }
+
+        .powerup-btn.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: #ccc;
+        }
+
+        .powerup-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .feedback-overlay.show { display: flex; }
+
+        .feedback-card {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            text-align: center;
+            max-width: 350px;
+            width: 100%;
+            animation: popIn 0.3s;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .feedback-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+
+        .feedback-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .feedback-text {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .feedback-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .challenge-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            z-index: 2000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .challenge-modal.show { display: block; }
+
+        .challenge-content {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            border-radius: 30px;
+            padding: 30px;
+            max-width: 450px;
+            margin: 20px auto;
+            color: white;
+            position: relative;
+        }
+
+        .challenge-title {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .challenge-timer {
+            font-size: 3rem;
+            text-align: center;
+            font-weight: 800;
+            margin: 20px 0;
+            color: var(--danger);
+        }
+
+        .challenge-input {
+            width: 100%;
+            padding: 15px;
+            border-radius: 15px;
+            border: 3px solid var(--accent);
+            font-size: 1.1rem;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .ranking-screen {
+            display: none;
+            background: white;
+            border-radius: 25px;
+            padding: 25px;
+            text-align: center;
+            flex: 1;
+        }
+
+        .ranking-screen.show { display: block; }
+
+        .ranking-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .ranking-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            transition: all 0.3s;
+        }
+
+        .ranking-item:nth-child(1) {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .ranking-item:nth-child(2) {
+            background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
+            color: white;
+        }
+
+        .ranking-item:nth-child(3) {
+            background: linear-gradient(135deg, #CD7F32, #B87333);
+            color: white;
+        }
+
+        .ranking-position {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-right: 15px;
+            width: 40px;
+        }
+
+        .ranking-avatar {
+            font-size: 2rem;
+            margin-right: 15px;
+        }
+
+        .ranking-info {
+            flex: 1;
+            text-align: left;
+        }
+
+        .ranking-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .ranking-score {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .achievement-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            margin-top: 5px;
+        }
+
+        .lobby-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            padding: 20px;
+        }
+
+        .lobby-screen.hidden { display: none; }
+
+        .lobby-title {
+            font-size: 2.5rem;
+            color: white;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 800;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .lobby-subtitle {
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 40px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .lobby-input {
+            width: 100%;
+            max-width: 300px;
+            padding: 18px;
+            border-radius: 15px;
+            border: none;
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .lobby-btn {
+            width: 100%;
+            max-width: 300px;
+            padding: 18px;
+            border-radius: 15px;
+            border: none;
+            background: var(--accent);
+            color: var(--dark);
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .lobby-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .room-code {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 5px;
+            margin: 20px 0;
+        }
+
+        .waiting-text {
+            color: white;
+            font-size: 1.1rem;
+            margin-top: 20px;
+        }
+
+        .hidden { display: none !important; }
+
+        @media (max-width: 380px) {
+            .game-title { font-size: 1.2rem; }
+            .question-text { font-size: 1rem; }
+            .option-btn { padding: 15px 12px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOBBY -->
+    <div class="lobby-screen" id="lobby">
+        <div class="lobby-title">A Lenda do Morfema Perdido</div>
+        <div class="lobby-subtitle">Caçadores de Palavras, uni-vos!</div>
+        
+        <input type="text" class="lobby-input" id="playerName" placeholder="Seu nome" maxlength="12">
+        
+        <button class="lobby-btn" onclick="createRoom()">Criar Sala</button>
+        <div style="height: 15px;"></div>
+        <button class="lobby-btn" onclick="showJoin()" style="background: white;">Entrar em Sala</button>
+        
+        <div id="joinSection" style="display: none; margin-top: 20px; width: 100%; max-width: 300px;">
+            <input type="text" class="lobby-input" id="roomCode" placeholder="Código da sala" maxlength="4">
+            <button class="lobby-btn" onclick="joinRoom()">Entrar</button>
+        </div>
+
+        <div id="waitingSection" style="display: none; text-align: center;">
+            <div class="room-code" id="displayCode">XXXX</div>
+            <div class="waiting-text">Aguardando jogadores...<br><span id="playerCount">1/6</span></div>
+            <button class="lobby-btn" onclick="startGame()" style="margin-top: 20px; background: var(--success);">Iniciar</button>
+        </div>
+    </div>
+
+    <!-- GAME -->
+    <div class="game-container hidden" id="gameScreen">
+        <div class="game-header">
+            <div class="game-title">A Lenda do Morfema Perdido</div>
+            <div class="phase-indicator" id="phaseIndicator">
+                <div class="phase-dot" data-phase="1"></div>
+                <div class="phase-dot" data-phase="2"></div>
+                <div class="phase-dot" data-phase="3"></div>
+                <div class="phase-dot" data-phase="4"></div>
+            </div>
+        </div>
+
+        <div class="player-bar" id="playerBar"></div>
+
+        <div class="narrative-box" id="narrativeBox">
+            <span class="narrative-icon">*</span>
+            <span id="narrativeText">Bem-vindo ao Vale dos Radicais!</span>
+        </div>
+
+        <div class="question-container" id="questionContainer">
+            <div class="question-number" id="questionNumber">Questão 1/30</div>
+            <div class="question-theme" id="questionTheme">VALE DOS RADICAIS</div>
+            <div class="question-text" id="questionText">Carregando...</div>
+            
+            <div class="timer-bar">
+                <div class="timer-progress" id="timerBar"></div>
+            </div>
+            <div class="timer-text" id="timerText">15 segundos</div>
+
+            <div class="options-grid" id="optionsGrid"></div>
+
+            <div class="powerup-tray" id="powerupTray">
+                <button class="powerup-btn disabled" id="powerup1" onclick="usePowerup(1)" title="Lupa Etimologica">
+                    <span style="font-size: 1.2rem;">&#128269;</span><span class="powerup-count" id="count1">0</span>
+                </button>
+                <button class="powerup-btn disabled" id="powerup2" onclick="usePowerup(2)" title="Raio Sinonimo">
+                    <span style="font-size: 1.2rem;">&#9889;</span><span class="powerup-count" id="count2">0</span>
+                </button>
+                <button class="powerup-btn disabled" id="powerup3" onclick="usePowerup(3)" title="Escudo Gramatical">
+                    <span style="font-size: 1.2rem;">&#128737;</span><span class="powerup-count" id="count3">0</span>
+                </button>
+                <button class="powerup-btn disabled" id="powerup4" onclick="usePowerup(4)" title="Portal Composto">
+                    <span style="font-size: 1.2rem;">&#127744;</span><span class="powerup-count" id="count4">0</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="ranking-screen" id="rankingScreen">
+            <div class="ranking-title">Caçada Finalizada!</div>
+            <ul class="ranking-list" id="rankingList"></ul>
+            <button class="lobby-btn" onclick="location.reload()" style="margin-top: 20px;">Jogar Novamente</button>
+        </div>
+    </div>
+
+    <div class="feedback-overlay" id="feedbackModal">
+        <div class="feedback-card">
+            <div class="feedback-icon" id="feedbackIcon">OK</div>
+            <div class="feedback-title" id="feedbackTitle">Correto!</div>
+            <div class="feedback-text" id="feedbackText">+3 pontos</div>
+            <button class="feedback-btn" onclick="nextQuestion()">Continuar</button>
+        </div>
+    </div>
+
+    <div class="challenge-modal" id="challengeModal">
+        <div class="challenge-content">
+            <div class="challenge-title" id="challengeTitle">Desafio Especial!</div>
+            <div class="challenge-timer" id="challengeTimer">20</div>
+            <div id="challengeContent"></div>
+            <button class="feedback-btn" onclick="submitChallenge()" style="margin-top: 20px;">Confirmar</button>
+        </div>
+    </div>
+
+    <script>
+        // DADOS DO JOGO - Versão ASCII-safe
+        const questions = [
+            // FASE 1: VALE DOS RADICAIS (1-8)
+            {
+                id: 1,
+                phase: 1,
+                theme: "RADICAL VS. TEMA",
+                text: "Analise 'cantavamos'. Qual afirmacao identifica CORRETAMENTE o tema verbal?",
+                options: [
+                    "cant- (apenas o radical)",
+                    "canta- (radical + vogal tematica da 1a conjugacao)",
+                    "cantav- (radical + desinencia temporal)",
+                    "cantava- (tema + desinencia modo-temporal)"
+                ],
+                correct: 1,
+                explanation: "O tema e radical + vogal tematica. O -a- indica a 1a conjugacao!",
+                narrative: "O Vale dos Radicais se abre! Cuidado com as armadilhas etimologicas..."
+            },
+            {
+                id: 2,
+                phase: 1,
+                theme: "FAMILIA DE PALAVRAS",
+                text: "Qual palavra NAO pertence a familia etimologica de 'agua'?",
+                options: ["Aquatico", "Enxurrada", "Hidreletrico", "Aqueduto"],
+                correct: 1,
+                explanation: "'Enxurrada' vem de 'chuva' (excurrere), nao de AQUA!",
+                narrative: "Uma bifurcacao no caminho! Escolha sabiamente..."
+            },
+            {
+                id: 3,
+                phase: 1,
+                theme: "VOGAL TEMATICA",
+                text: "Em 'partimos', a vogal tematica e -i- (3a conjugacao). Mas qual fenomeno acontece quando ela encontra a desinencia -mos?",
+                options: [
+                    "Ela desaparece completamente",
+                    "Transforma-se em -i- tonico",
+                    "Funde-se com a desinencia formando -imos",
+                    "Muda para -e- por eufonia"
+                ],
+                correct: 2,
+                explanation: "part- + -i- + -mos = 'partimos' (fusao natural dos morfemas)!",
+                narrative: "O vento da 3a conjugacao sopra forte!"
+            },
+            {
+                id: 4,
+                phase: 1,
+                theme: "DESINENCIAS NOMINAIS",
+                text: "Em 'paezinhos', quantas desinencias nominais estao presentes e quais sao?",
+                options: [
+                    "1: apenas o plural (-s)",
+                    "2: -inho (diminutivo) e -s (plural)",
+                    "2: -ezinho (sufixo derivacional) e -s (desinencia numero)",
+                    "3: -ez- (vogal de ligacao), -inho (sufixo) e -s (plural)"
+                ],
+                correct: 2,
+                explanation: "-ez- e vogal de ligacao; desinencias sao so as flexionais de numero!",
+                narrative: "O padeiro morfologico preparou uma armadilha deliciosa..."
+            },
+            {
+                id: 5,
+                phase: 1,
+                theme: "ELEMENTOS DE LIGACAO",
+                text: "Analise 'paulada'. O -a- e vogal tematica ou vogal de ligacao? Justifique:",
+                options: [
+                    "Vogal tematica, porque 'paul-' e radical verbal",
+                    "Vogal de ligacao, porque facilita a juncao de 'paul' + '-ada'",
+                    "Vogal tematica, porque indica genero feminino",
+                    "Nao e morfema, e letra do radical"
+                ],
+                correct: 1,
+                explanation: "Em substantivos, o -a- liga radical a sufixo (eufonia), nao indica conjugacao!",
+                narrative: "A vogal de ligacao esconde-se entre as arvores..."
+            },
+            {
+                id: 6,
+                phase: 1,
+                theme: "ANALISE MORFEMICA",
+                text: "Decomponha 'deslealdades' em seus elementos morficos. Qual sequencia esta correta?",
+                options: [
+                    "des- (prefixo) + leal (radical) + -dade (sufixo) + -s (desinencia)",
+                    "des- + lealdade ( tema) + -s",
+                    "desleal (tema) + -dade (sufixo) + -s",
+                    "des- + leal- (radical) + -d- (vogal de ligacao) + -ade (sufixo) + -s"
+                ],
+                correct: 0,
+                explanation: "'Leal' e o radical primitivo; -dade e sufixo nominalizador!",
+                narrative: "A lealdade e testada na analise morfologica!"
+            },
+            {
+                id: 7,
+                phase: 1,
+                theme: "FALSOS COGNATOS",
+                text: "'Portao' e 'oportuno' compartilham o mesmo radical?",
+                options: [
+                    "Sim, ambos vem de 'porta' (entrada)",
+                    "Nao, 'portao' e de 'porta'; 'oportuno' e de 'portus' (porto/harbor)",
+                    "Sim, ambos sao diminutivos de 'porta'",
+                    "Nao, 'oportuno' e palavra primitiva sem radical"
+                ],
+                correct: 1,
+                explanation: "Falsa familia! 'Oportuno' vem de opportunus (conveniente), nao de porta!",
+                narrative: "Duas portas se abrem, mas apenas uma leva ao tesouro..."
+            },
+            {
+                id: 8,
+                phase: 1,
+                theme: "DESAFIO ESPECIAL",
+                text: "DUELO DE FAMILIAS! Liste palavras da familia de SCRIB/SCRIT (escrever)!",
+                options: ["INICIAR DESAFIO", "Pular (-2 pontos)", "", ""],
+                correct: 0,
+                explanation: "Desafio especial! Escreva: escrever, escritor, inscrever, descrever, prescricao, manuscrito, escrita...",
+                narrative: "O Guardiao dos Radicais desafia voce a um duelo de familias!",
+                isChallenge: true,
+                challengeType: "family",
+                challengeData: {
+                    validWords: ["escrever", "escritor", "inscrever", "descrever", "prescrever", "descricao", "prescricao", "manuscrito", "escrita", "escritura", "inscricao", "transcrever", "proscrever", "ascrito"],
+                    time: 20
+                }
+            },
+
+            // FASE 2: MONTANHA DOS AFIXOS (9-16)
+            {
+                id: 9,
+                phase: 2,
+                theme: "PREFIXOS: SEMANTICA",
+                text: "Qual par de palavras apresenta prefixos com significado OPOSTO?",
+                options: ["Antesala / Subsolo", "Pre-historia / Pos-guerra", "Extraoficial / Cooficial", "Hipermercado / Minimercado"],
+                correct: 3,
+                explanation: "Hiper- (excesso) vs. Mini- (diminuicao)! Os outros sao complementares!",
+                narrative: "A Montanha dos Afixos se ergue! Cuidado com os opostos..."
+            },
+            {
+                id: 10,
+                phase: 2,
+                theme: "SUFIXOS: VALOR SEMANTICO",
+                text: "O sufixo -eiro em 'cafeteira' indica:",
+                options: ["Agente (quem faz)", "Lugar onde se vende", "Recipiente/Instrumento", "Coletivo"],
+                correct: 2,
+                explanation: "-eiro/-eira como instrumento: cafeteira, celeiro, luminaria!",
+                narrative: "O aroma do cafe mistura-se com a morfologia..."
+            },
+            {
+                id: 11,
+                phase: 2,
+                theme: "AFIXOS HIBRIDOS",
+                text: "'Automovel' e hibridismo (grego + latim). Qual analise esta correta?",
+                options: [
+                    "Auto- (grego: 'proprio') + -movel (latim: 'que move')",
+                    "Aut- (latim: 'autoridade') + -omovel (grego: 'caminho')",
+                    "Auto- (grego: 'sozinho') + -movel (latim: 'mobilis')",
+                    "A- (privativo) + -utomovel (radical complexo)"
+                ],
+                correct: 2,
+                explanation: "Auto- = 'ele mesmo/sozinho' (grego autos); movel do latim mobilis!",
+                narrative: "O veiculo hibrido acelera pela montanha!"
+            },
+            {
+                id: 12,
+                phase: 2,
+                theme: "PREFIXO + SUFIXO",
+                text: "Em 'infelizmente', qual afirmacao sobre a derivacao esta correta?",
+                options: [
+                    "E parassintetica: nao existe 'infelizmente' sem ambos os afixos",
+                    "E prefixal e sufixal NAO simultanea: 'infeliz' existe como palavra intermediaria",
+                    "E apenas sufixal: in- e particula negativa integrada ao radical",
+                    "E regressiva: veio de 'felizmente' por reducao"
+                ],
+                correct: 1,
+                explanation: "'Infeliz' existe (prefixal); depois adicionou -mente (sufixal)!",
+                narrative: "A felicidade se transforma em infelicidade..."
+            },
+            {
+                id: 13,
+                phase: 2,
+                theme: "PARASSINTESE",
+                text: "Qual palavra e VERDADEIRAMENTE parassintetica (so existe com ambos os afixos)?",
+                options: ["Desumanizar", "Empobrecer", "Enriquecer", "Todos os anteriores"],
+                correct: 1,
+                explanation: "'Pobrecer' nao existe! 'Empobrecer' e parassintetica pura!",
+                narrative: "O sol se poe na parassintese..."
+            },
+            {
+                id: 14,
+                phase: 2,
+                theme: "SUFIXOS APRECIATIVOS",
+                text: "Analise 'livrinho' e 'livraco'. Qual afirmacao esta correta?",
+                options: [
+                    "Ambos sao diminutivos com conotacao afetiva",
+                    "'Livrinho' = diminutivo (pequeno/trivial); 'Livraco' = aumentativo (grande/imponente)",
+                    "'Livrinho' = pequeno fisico; 'Livraco' = pequeno com desprezo",
+                    "Ambos sao aumentativos de tamanho fisico"
+                ],
+                correct: 1,
+                explanation: "-inho pode ser diminutivo ou depreciativo; -aco e aumentativo!",
+                narrative: "O livro cresce... ou diminui... depende do sufixo!"
+            },
+            {
+                id: 15,
+                phase: 2,
+                theme: "PREFIXOS MULTIPLOS",
+                text: "O prefixo 'a-' em 'amoral' e 'anexo' tem a mesma origem e significado?",
+                options: [
+                    "Sim, ambos sao privativos (negacao)",
+                    "Nao: 'amoral' = grego (a- privativo); 'anexo' = latim (ad- 'junto a')",
+                    "Sim, ambos indicam direcao ('para')",
+                    "Nao: 'amoral' = latim; 'anexo' = grego"
+                ],
+                correct: 1,
+                explanation: "'A-' em 'anexo' vem de AD- (aproximacao); em 'amoral' e o grego A- (negacao)!",
+                narrative: "Falsos irmaos afixais se encontram no penhasco!"
+            },
+            {
+                id: 16,
+                phase: 2,
+                theme: "DESAFIO ESPECIAL",
+                text: "QUEBRA-CABECA PARASSINTETICO! Reconstitua as palavras!",
+                options: ["INICIAR DESAFIO", "Pular (-2 pontos)", "", ""],
+                correct: 0,
+                explanation: "Monte: Entardecer, Amanhecer, Embranhecer!",
+                narrative: "O Guardiao dos Afixos embaralhou as palavras!",
+                isChallenge: true,
+                challengeType: "puzzle",
+                challengeData: {
+                    pieces: ["EN-", "TARDE", "ECER", "A-", "MANHA", "EM-", "BRANCO"],
+                    answers: ["entardecer", "amanhecer", "embranhecer"],
+                    time: 30
+                }
+            },
+
+            // FASE 3: RIO DA DERIVACAO (17-24)
+            {
+                id: 17,
+                phase: 3,
+                theme: "DERIVACAO REGRESSIVA",
+                text: "'O choro' (substantivo) vem de 'chorar' (verbo). Qual criterio distingue regressiva de conversao impropria?",
+                options: [
+                    "Nenhum, sao sinonimos",
+                    "Regressiva altera a forma (chorar -> choro); Impropria mantem a forma identica",
+                    "Regressiva e so para verbos; Impropria e so para substantivos",
+                    "Regressiva e processo historico; Impropria e uso momentaneo"
+                ],
+                correct: 1,
+                explanation: "Regressiva = truncamento formal (perda do -r); Impropria = mesma forma, funcao diferente!",
+                narrative: "As aguas do Rio da Derivacao correm rapidas!"
+            },
+            {
+                id: 18,
+                phase: 3,
+                theme: "DERIVACAO IMPROPRIA",
+                text: "Em 'O jantar estava otimo', 'jantar' e conversao impropria. Em 'Vamos jantar cedo', e:",
+                options: ["Substantivo", "Verbo (uso original)", "Adjetivo", "Adverbio"],
+                correct: 1,
+                explanation: "'Jantar' originalmente e verbo; a conversao e quando vira substantivo!",
+                narrative: "A refeicao se transforma em acao..."
+            },
+            {
+                id: 19,
+                phase: 3,
+                theme: "DERIVACAO SUFIXAL",
+                text: "O sufixo -cao em 'realizacao' transforma o verbo em substantivo com valor de:",
+                options: ["Agente", "Acao/Processo/Resultado", "Lugar", "Instrumento"],
+                correct: 1,
+                explanation: "-cao/-mento/-anca nominalizam verbos indicando processo ou resultado!",
+                narrative: "A realizacao se concretiza na derivacao!"
+            },
+            {
+                id: 20,
+                phase: 3,
+                theme: "DERIVACAO PREFIXAL",
+                text: "'Submarino' e adjetivo/substantivo que vem de 'marino'. A adicao do prefixo sub-:",
+                options: [
+                    "Manteve a classe gramatical",
+                    "Alterou de adjetivo para substantivo apenas",
+                    "Permite ambas as classes, mas com restricao sintatica",
+                    "Criou uma nova classe: adverbio"
+                ],
+                correct: 2,
+                explanation: "'Submarino' funciona como adjetivo e substantivo, mas com distribuicao sintatica diferente!",
+                narrative: "Mergulhe nas profundezas da derivacao prefixal!"
+            },
+            {
+                id: 21,
+                phase: 3,
+                theme: "DERIVACAO VS. COMPOSICAO",
+                text: "'Guarda-chuva' e composicao. 'Guarda-chuvas' (funcionario) e:",
+                options: [
+                    "Composicao com aglutinacao",
+                    "Derivacao sufixal de 'guarda-chuva'",
+                    "Derivacao impropria de 'guarda-chuva'",
+                    "Palavra primitiva independente"
+                ],
+                correct: 2,
+                explanation: "E conversao de classe: o objeto vira funcao/profissao (impropria, nao afixal)!",
+                narrative: "O guarda-chuva ganha vida propria!"
+            },
+            {
+                id: 22,
+                phase: 3,
+                theme: "NEOLOGISMO",
+                text: "'Deletar' e neologismo no portugues. Qual processo de formacao ele representa?",
+                options: [
+                    "Derivacao prefixal de 'letar'",
+                    "Derivacao sufixal de 'dele'",
+                    "Estrangeirismo adaptado por derivacao impropria do ingles 'delete'",
+                    "Composicao de 'de' + 'letar'"
+                ],
+                correct: 2,
+                explanation: "E anglicismo adaptado a morfologia portuguesa (verbo regular -ar), sem derivacao afixal!",
+                narrative: "O digital se funde ao analogico!"
+            },
+            {
+                id: 23,
+                phase: 3,
+                theme: "DERIVACAO HISTORICA",
+                text: "A palavra 'editor' (do latim editor) deu origem a 'editar' em portugues. Isso demonstra:",
+                options: [
+                    "Derivacao regressiva historica (substantivo -> verbo)",
+                    "Derivacao sufixal inversa",
+                    "Estrangeirismo direto do latim",
+                    "Composicao com vogal de ligacao"
+                ],
+                correct: 0,
+                explanation: "Processo raro: no latim era 'edere' (verbo) -> 'editor' (substantivo); no portugues inverteu!",
+                narrative: "O tempo reescreve a derivacao!"
+            },
+            {
+                id: 24,
+                phase: 3,
+                theme: "DESAFIO ESPECIAL",
+                text: "Navegacao contra o tempo! Classifique 5 palavras em 30 segundos!",
+                options: ["INICIAR DESAFIO", "Pular (-2 pontos)", "", ""],
+                correct: 0,
+                explanation: "Escritorizacao (Sufixal multipla), Pente (Regressiva), Antinacionalizacao (Prefixal e sufixal), Almoco (Impropria), Blogueiro (Sufixal/neologismo)",
+                narrative: "A correnteza acelera! Classifique rapido!",
+                isChallenge: true,
+                challengeType: "classify",
+                challengeData: {
+                    words: ["ESCRITORIZACAO", "PENTE", "ANTINACIONALIZACAO", "ALMOCO", "BLOGUEIRO"],
+                    types: ["Sufixal multipla", "Regressiva", "Prefixal e sufixal", "Impropria", "Sufixal/neologismo"],
+                    time: 30
+                }
+            },
+
+            // FASE 4: TORRE DA MORFOLOGIA (25-30)
+            {
+                id: 25,
+                phase: 4,
+                theme: "COMPOSICAO: JUSTAPOSICAO",
+                text: "'Girassol' e justaposicao, mas por que, se houve alteracao grafica (s dobrado)?",
+                options: [
+                    "Porque a duplicacao do S e apenas ortografica, nao fonetica",
+                    "Porque nao houve perda de fonema, apenas manutencao do som /z/",
+                    "Porque 'gira' perdeu a vogal final",
+                    "Na verdade, e aglutinacao"
+                ],
+                correct: 1,
+                explanation: "Justaposicao mantem radicais intactos fonologicamente; o SS e regra ortografica para manter o som /z/!",
+                narrative: "O girassol aponta para a Torre da Morfologia!"
+            },
+            {
+                id: 26,
+                phase: 4,
+                theme: "AGLUTINACAO",
+                text: "'Planalto' (plano + alto) e aglutinacao porque:",
+                options: [
+                    "Perdeu o -o de 'plano'",
+                    "Perdeu o -o de 'plano' E o a- de 'alto' fundiu-se",
+                    "Perdeu o -o de 'plano' E o a- de 'alto' desapareceu completamente",
+                    "Apenas mudou o acento tonico"
+                ],
+                correct: 2,
+                explanation: "Plano + alto -> planalto (perda do -o e do a-; fusao total = aglutinacao)!",
+                narrative: "As montanhas se fundem no planalto!"
+            },
+            {
+                id: 27,
+                phase: 4,
+                theme: "HIBRIDISMO",
+                text: "'Televisao' e hibridismo. Analise seus elementos:",
+                options: [
+                    "Tele- (grego: 'longe') + visao (latim: 'ver')",
+                    "Tele- (latim: 'distancia') + visao (grego: 'eido')",
+                    "Telev- (radical hibrido) + -isao (sufixo portugues)",
+                    "Nao e hibridismo, e composicao pura do grego"
+                ],
+                correct: 0,
+                explanation: "Tele- do grego tele (longe) + visao do latim visio (ato de ver)!",
+                narrative: "A imagem viaja de longe..."
+            },
+            {
+                id: 28,
+                phase: 4,
+                theme: "ONOMATOPEIA",
+                text: "'Tique-taque' e onomatopeia, mas morfologicamente e tambem:",
+                options: [
+                    "Palavra primitiva sem estrutura interna",
+                    "Composicao por justaposicao de dois radicais onomatopeicos",
+                    "Derivacao reduplicativa sufixal",
+                    "Sigla fonetica"
+                ],
+                correct: 1,
+                explanation: "E composicao de dois elementos onomatopeicos (tique + taque), cada um imitando um som!",
+                narrative: "O relogio marca o tempo da morfologia!"
+            },
+            {
+                id: 29,
+                phase: 4,
+                theme: "SIGLAS",
+                text: "'IBGE' e sigla pronunciavel por soletracao. 'Unesco' e:",
+                options: [
+                    "Sigla pronunciavel como palavra (siglao ou acronimo)",
+                    "Abreviacao silabica",
+                    "Palavra composta por justaposicao",
+                    "Estrangeirismo nao adaptado"
+                ],
+                correct: 0,
+                explanation: "UNESCO = United Nations Educational... -> pronuncia-se /u'nesko/ (acronimo/siglao)!",
+                narrative: "A sigla mundial se revela!"
+            },
+            {
+                id: 30,
+                phase: 4,
+                theme: "ANALISE COMPLETA",
+                text: "Analise morfologicamente 'DESINTERNACIONALIZACAO':",
+                options: [
+                    "Des- (prefixo) + internacional (radical) + -izacao (sufixo)",
+                    "Des- + inter- (prefixo) + nacional (radical) + -izacao",
+                    "Des- + internacional- (tema) + -iz- (vogal de ligacao) + -acao (sufixo)",
+                    "Des- + inter- (prefixo) + nacion- (radical) + -al (sufixo) + -izacao (sufixo)"
+                ],
+                correct: 3,
+                explanation: "Analise completa: des- + inter- (prefixos) + nacion- (radical) + -al (sufixo) + -izacao (sufixo) - derivacao prefixal multipla + sufixal multipla!",
+                narrative: "O Guardiao dos Neologismos cai! Voce e o Mestre Morfologico!"
+            }
+        ];
+
+        // ESTADO DO JOGO
+        let gameState = {
+            currentQuestion: 0,
+            players: [],
+            currentPlayer: 0,
+            scores: {},
+            powerups: {},
+            streak: {},
+            roomCode: '',
+            timer: null,
+            timeLeft: 15,
+            challengeActive: false,
+            gameEnded: false
+        };
+
+        // INICIALIZACAO
+        function showJoin() {
+            document.getElementById('joinSection').style.display = 'block';
+        }
+
+        function createRoom() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) return alert('Digite seu nome!');
+            
+            gameState.roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+            gameState.players = [{id: 1, name: name, avatar: getRandomAvatar()}];
+            gameState.scores[name] = 0;
+            gameState.powerups[name] = {1: 0, 2: 0, 3: 0, 4: 0};
+            gameState.streak[name] = 0;
+            
+            document.getElementById('displayCode').textContent = gameState.roomCode;
+            document.getElementById('waitingSection').style.display = 'block';
+            document.querySelector('.lobby-btn').style.display = 'none';
+            document.getElementById('joinSection').style.display = 'none';
+            
+            updatePlayerCount();
+            
+            setTimeout(() => addBotPlayer('Ana'), 2000);
+            setTimeout(() => addBotPlayer('Pedro'), 4000);
+        }
+
+        function addBotPlayer(name) {
+            if (gameState.players.length >= 6) return;
+            gameState.players.push({
+                id: gameState.players.length + 1,
+                name: name,
+                avatar: getRandomAvatar(),
+                isBot: true
+            });
+            gameState.scores[name] = 0;
+            gameState.powerups[name] = {1: 0, 2: 0, 3: 0, 4: 0};
+            gameState.streak[name] = 0;
+            updatePlayerCount();
+        }
+
+        function updatePlayerCount() {
+            document.getElementById('playerCount').textContent = gameState.players.length + '/6';
+        }
+
+        function joinRoom() {
+            const name = document.getElementById('playerName').value.trim();
+            const code = document.getElementById('roomCode').value.trim().toUpperCase();
+            if (!name || !code) return alert('Preencha todos os campos!');
+            
+            alert('Entrando na sala ' + code + '... (Simulacao)');
+            startGame();
+        }
+
+        function startGame() {
+            document.getElementById('lobby').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            
+            renderPlayerBar();
+            loadQuestion(0);
+        }
+
+        function getRandomAvatar() {
+            const avatars = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+            return avatars[Math.floor(Math.random() * avatars.length)];
+        }
+
+        function renderPlayerBar() {
+            const bar = document.getElementById('playerBar');
+            bar.innerHTML = gameState.players.map((p, i) => {
+                const isActive = i === gameState.currentPlayer;
+                const hasStreak = gameState.streak[p.name] >= 2;
+                return '<div class="player-card ' + (isActive ? 'active turn' : '') + '" id="player-' + i + '">' +
+                    '<div class="player-avatar">' + p.avatar + '</div>' +
+                    '<div class="player-name">' + p.name + '</div>' +
+                    '<div class="player-score" id="score-' + p.name + '">' + gameState.scores[p.name] + '</div>' +
+                    (hasStreak ? '<div class="player-status">*</div>' : '') +
+                    '</div>';
+            }).join('');
+        }
+
+        function loadQuestion(index) {
+            if (index >= questions.length) {
+                endGame();
+                return;
+            }
+
+            const q = questions[index];
+            gameState.currentQuestion = index;
+            gameState.timeLeft = q.isChallenge ? q.challengeData.time : 15;
+            
+            document.querySelectorAll('.phase-dot').forEach((dot, i) => {
+                dot.classList.remove('current', 'completed');
+                if (i < q.phase - 1) dot.classList.add('completed');
+                if (i === q.phase - 1) dot.classList.add('current');
+            });
+
+            document.getElementById('narrativeText').textContent = q.narrative;
+            document.getElementById('questionNumber').textContent = 'Questao ' + q.id + '/30';
+            document.getElementById('questionTheme').textContent = q.theme;
+            document.getElementById('questionText').textContent = q.text;
+            
+            const grid = document.getElementById('optionsGrid');
+            grid.innerHTML = '';
+            
+            if (q.isChallenge) {
+                grid.innerHTML = '<button class="option-btn" onclick="startChallenge()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-align: center;">' +
+                    '<span style="font-size: 1.2rem;">INICIAR DESAFIO ESPECIAL</span></button>' +
+                    '<button class="option-btn" onclick="skipChallenge()" style="text-align: center; color: #666;">Pular desafio (-2 pontos)</button>';
+            } else {
+                q.options.forEach((opt, i) => {
+                    if (!opt) return;
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.innerHTML = '<span class="option-letter">' + String.fromCharCode(97 + i) + '</span> ' + opt;
+                    btn.onclick = function() { answer(i); };
+                    grid.appendChild(btn);
+                });
+            }
+
+            updatePowerupDisplay();
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(gameState.timer);
+            const bar = document.getElementById('timerBar');
+            const text = document.getElementById('timerText');
+            const maxTime = gameState.timeLeft;
+            
+            gameState.timer = setInterval(function() {
+                gameState.timeLeft -= 0.1;
+                const pct = (gameState.timeLeft / maxTime) * 100;
+                bar.style.width = pct + '%';
+                text.textContent = Math.ceil(gameState.timeLeft) + 's';
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timer);
+                    timeUp();
+                }
+            }, 100);
+        }
+
+        function answer(optionIndex) {
+            clearInterval(gameState.timer);
+            const q = questions[gameState.currentQuestion];
+            const isCorrect = optionIndex === q.correct;
+            const currentPlayer = gameState.players[gameState.currentPlayer];
+            
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(function(btn, i) {
+                btn.classList.add('disabled');
+                if (i === q.correct) btn.classList.add('correct');
+                else if (i === optionIndex && !isCorrect) btn.classList.add('wrong');
+            });
+
+            if (isCorrect) {
+                const basePoints = gameState.timeLeft > 10 ? 3 : 1;
+                const streakBonus = gameState.streak[currentPlayer.name] >= 2 ? 2 : 1;
+                const total = basePoints * streakBonus;
+                
+                gameState.scores[currentPlayer.name] += total;
+                gameState.streak[currentPlayer.name]++;
+                
+                if (gameState.streak[currentPlayer.name] % 2 === 0) {
+                    const randomPower = Math.floor(Math.random() * 4) + 1;
+                    gameState.powerups[currentPlayer.name][randomPower]++;
+                }
+                
+                showFeedback(true, total, q.explanation);
+            } else {
+                gameState.scores[currentPlayer.name] -= 1;
+                gameState.streak[currentPlayer.name] = 0;
+                showFeedback(false, -1, q.explanation);
+            }
+
+            updatePlayerBar();
+        }
+
+        function timeUp() {
+            const currentPlayer = gameState.players[gameState.currentPlayer];
+            gameState.scores[currentPlayer.name] -= 1;
+            gameState.streak[currentPlayer.name] = 0;
+            showFeedback(false, -1, "Tempo esgotado! O Guardiao nao espera...");
+            updatePlayerBar();
+        }
+
+        function showFeedback(isCorrect, points, explanation) {
+            const modal = document.getElementById('feedbackModal');
+            const icon = document.getElementById('feedbackIcon');
+            const title = document.getElementById('feedbackTitle');
+            const text = document.getElementById('feedbackText');
+            
+            icon.textContent = isCorrect ? 'OK' : 'X';
+            title.textContent = isCorrect ? 'Correto!' : 'Errado!';
+            title.style.color = isCorrect ? 'var(--success)' : 'var(--danger)';
+            text.innerHTML = '<strong>' + (points > 0 ? '+' : '') + points + ' pontos</strong><br><br><small>' + explanation + '</small>';
+            
+            modal.classList.add('show');
+        }
+
+        function nextQuestion() {
+            document.getElementById('feedbackModal').classList.remove('show');
+            
+            gameState.currentPlayer = (gameState.currentPlayer + 1) % gameState.players.length;
+            
+            if (gameState.currentPlayer === 0) {
+                loadQuestion(gameState.currentQuestion + 1);
+            } else {
+                renderPlayerBar();
+                if (gameState.players[gameState.currentPlayer].isBot) {
+                    setTimeout(botPlay, 1500);
+                }
+            }
+        }
+
+        function botPlay() {
+            const q = questions[gameState.currentQuestion];
+            const accuracy = 0.6;
+            const choice = Math.random() < accuracy ? q.correct : Math.floor(Math.random() * 4);
+            answer(choice);
+        }
+
+        function startChallenge() {
+            const q = questions[gameState.currentQuestion];
+            const modal = document.getElementById('challengeModal');
+            const content = document.getElementById('challengeContent');
+            
+            modal.classList.add('show');
+            gameState.challengeActive = true;
+            
+            if (q.challengeType === 'family') {
+                content.innerHTML = '<p style="margin-bottom: 15px;">Digite palavras da familia de SCRIB/SCRIT (escrever):</p>' +
+                    '<input type="text" class="challenge-input" id="challengeInput" placeholder="Digite e pressione Enter" onkeypress="if(event.key===\'Enter\')addChallengeWord()">' +
+                    '<div id="challengeWords" style="display: flex; flex-wrap: wrap; gap: 5px; margin: 15px 0; max-height: 150px; overflow-y: auto;"></div>' +
+                    '<p style="font-size: 0.9rem; opacity: 0.8;">Palavras validas: escrever, escritor, inscrever, descrever, etc.</p>';
+                gameState.challengeWords = [];
+            } else if (q.challengeType === 'puzzle') {
+                content.innerHTML = '<p style="margin-bottom: 15px;">Monte as palavras parassinteticas:</p>' +
+                    '<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; justify-content: center;">' +
+                    q.challengeData.pieces.map(function(p) {
+                        return '<button onclick="addPiece(\'' + p + '\')" style="padding: 10px 15px; border-radius: 10px; border: none; background: rgba(255,255,255,0.2); color: white; cursor: pointer; font-weight: 600;">' + p + '</button>';
+                    }).join('') +
+                    '</div>' +
+                    '<div id="puzzleAnswer" style="min-height: 50px; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; margin-bottom: 15px; font-size: 1.2rem; font-weight: 600;"></div>' +
+                    '<button onclick="clearPuzzle()" style="padding: 8px 20px; border-radius: 20px; border: none; background: rgba(255,255,255,0.2); color: white; cursor: pointer;">Limpar</button>';
+                gameState.puzzlePieces = [];
+            } else if (q.challengeType === 'classify') {
+                content.innerHTML = '<p style="margin-bottom: 15px;">Classifique cada palavra:</p>' +
+                    '<div id="classifyList" style="text-align: left;">' +
+                    q.challengeData.words.map(function(w, i) {
+                        return '<div style="margin-bottom: 10px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 10px;">' +
+                            '<strong>' + w + '</strong><br>' +
+                            '<select id="classify-' + i + '" style="width: 100%; padding: 8px; border-radius: 5px; border: none; margin-top: 5px;">' +
+                            '<option value="">Selecione...</option>' +
+                            q.challengeData.types.map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('') +
+                            '</select></div>';
+                    }).join('') +
+                    '</div>';
+            }
+            
+            let timeLeft = q.challengeData.time;
+            const timerEl = document.getElementById('challengeTimer');
+            const challengeTimer = setInterval(function() {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(challengeTimer);
+                    submitChallenge();
+                }
+            }, 1000);
+            gameState.challengeTimer = challengeTimer;
+        }
+
+        function addChallengeWord() {
+            const input = document.getElementById('challengeInput');
+            const word = input.value.trim().toLowerCase();
+            if (!word) return;
+            
+            gameState.challengeWords.push(word);
+            const container = document.getElementById('challengeWords');
+            const tag = document.createElement('span');
+            tag.style.cssText = 'background: rgba(255,255,255,0.3); padding: 5px 12px; border-radius: 15px; font-size: 0.9rem;';
+            tag.textContent = word;
+            container.appendChild(tag);
+            input.value = '';
+        }
+
+        function addPiece(piece) {
+            gameState.puzzlePieces.push(piece);
+            document.getElementById('puzzleAnswer').textContent = gameState.puzzlePieces.join('');
+        }
+
+        function clearPuzzle() {
+            gameState.puzzlePieces = [];
+            document.getElementById('puzzleAnswer').textContent = '';
+        }
+
+        function skipChallenge() {
+            const currentPlayer = gameState.players[gameState.currentPlayer];
+            gameState.scores[currentPlayer.name] -= 2;
+            updatePlayerBar();
+            nextQuestion();
+        }
+
+        function submitChallenge() {
+            clearInterval(gameState.challengeTimer);
+            const modal = document.getElementById('challengeModal');
+            modal.classList.remove('show');
+            
+            const q = questions[gameState.currentQuestion];
+            const currentPlayer = gameState.players[gameState.currentPlayer];
+            let points = 0;
+            let feedback = "";
+            
+            if (q.challengeType === 'family') {
+                const validWords = q.challengeData.validWords;
+                const correct = gameState.challengeWords.filter(function(w) { return validWords.includes(w); });
+                points = correct.length * 2;
+                feedback = 'Voce acertou ' + correct.length + ' palavras validas!';
+            } else if (q.challengeType === 'puzzle') {
+                const answer = gameState.puzzlePieces.join('').toLowerCase();
+                const isCorrect = q.challengeData.answers.some(function(a) { return answer.includes(a); });
+                points = isCorrect ? 5 : 0;
+                feedback = isCorrect ? "Palavras montadas corretamente!" : "Nao foi dessa vez...";
+            } else if (q.challengeType === 'classify') {
+                const selects = document.querySelectorAll('[id^="classify-"]');
+                let correct = 0;
+                selects.forEach(function(sel, i) {
+                    if (sel.value === q.challengeData.types[i]) correct++;
+                });
+                points = correct * 2;
+                feedback = 'Voce acertou ' + correct + '/5 classificacoes!';
+            }
+            
+            gameState.scores[currentPlayer.name] += points;
+            gameState.streak[currentPlayer.name]++;
+            showFeedback(points > 0, points, feedback);
+            updatePlayerBar();
+        }
+
+        function updatePowerupDisplay() {
+            const currentPlayer = gameState.players[gameState.currentPlayer];
+            if (!currentPlayer) return;
+            
+            const powers = gameState.powerups[currentPlayer.name];
+            
+            for (let i = 1; i <= 4; i++) {
+                const btn = document.getElementById('powerup' + i);
+                const count = document.getElementById('count' + i);
+                count.textContent = powers[i];
+                
+                if (powers[i] > 0) {
+                    btn.classList.remove('disabled');
+                } else {
+                    btn.classList.add('disabled');
+                }
+            }
+        }
+
+        function usePowerup(type) {
+            const currentPlayer = gameState.players[gameState.currentPlayer];
+            if (gameState.powerups[currentPlayer.name][type] <= 0) return;
+            
+            gameState.powerups[currentPlayer.name][type]--;
+            updatePowerupDisplay();
+            
+            const q = questions[gameState.currentQuestion];
+            const buttons = document.querySelectorAll('.option-btn');
+            
+            if (type === 1) {
+                // Lupa: elimina 2 erradas
+                let eliminated = 0;
+                buttons.forEach(function(btn, i) {
+                    if (i !== q.correct && eliminated < 2 && !btn.classList.contains('hidden')) {
+                        btn.style.opacity = '0.3';
+                        btn.onclick = null;
+                        eliminated++;
+                    }
+                });
+            } else if (type === 2) {
+                // Raio: dobra pontos na proxima
+                alert('Raio Sinonimo ativado! Proximo acerto vale o dobro!');
+            }
+        }
+
+        function endGame() {
+            gameState.gameEnded = true;
+            document.getElementById('questionContainer').style.display = 'none';
+            document.getElementById('rankingScreen').classList.add('show');
+            
+            const sorted = gameState.players.sort(function(a, b) {
+                return gameState.scores[b.name] - gameState.scores[a.name];
+            });
+            
+            const list = document.getElementById('rankingList');
+            list.innerHTML = sorted.map(function(p, i) {
+                const medal = i === 0 ? '1.' : i === 1 ? '2.' : i === 2 ? '3.' : (i + 1) + '.
